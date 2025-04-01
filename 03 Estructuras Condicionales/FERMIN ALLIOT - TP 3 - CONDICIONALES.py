@@ -118,11 +118,11 @@ hemisferio = input("Ingrese el hemisferio en el que se encuentra (N/S): ")
 mes = int(input("Ingrese el numero del mes en el que se encuentra: "))
 dia = int(input("Ingrese el numero del dia en el que se encuentra: "))
 
-if (hemisferio=='n' and ((mes==12 and dia>=21) or ((mes>=1 and mes<=3) and (dia>=1 and dia<=20)))) or (hemisferio=='s' and ((mes==6 and dia>=21) or ((mes>=7 and mes<=9) and (dia>=1 and dia<=20)))):
+if ((hemisferio=='n' or hemisferio=='N') and ((mes==12 and dia>=21) or ((mes>=1 and mes<=3) and (dia>=1 and dia<=20)))) or ((hemisferio=='s' or hemisferio=='S') and ((mes==6 and dia>=21) or ((mes>=7 and mes<=9) and (dia>=1 and dia<=20)))):
     print("Invierno")
-elif (hemisferio=='n' and ((mes==3 and dia>=21) or ((mes>=4 and mes<=6) and (dia>=1 and dia<=20)))) or (hemisferio=='s' and ((mes==9 and dia>=21) or ((mes>=9 and mes<=11) and (dia>=1 and dia<=20)))):
+elif ((hemisferio=='n' or hemisferio=='N') and ((mes==3 and dia>=21) or ((mes>=4 and mes<=6) and (dia>=1 and dia<=20)))) or ((hemisferio=='s' or hemisferio=='S') and ((mes==9 and dia>=21) or ((mes>=9 and mes<=11) and (dia>=1 and dia<=20)))):
     print("Primavera")
-elif (hemisferio=='n' and ((mes==6 and dia>=21) or ((mes>=6 and mes<=8) and (dia>=1 and dia<=20)))) or (hemisferio=='s' and ((mes==11 and dia>=21) or ((mes>=11 and mes<=12 or mes==1) and (dia>=1 and dia<=20)))):
+elif ((hemisferio=='n' or hemisferio=='N') and ((mes==6 and dia>=21) or ((mes>=6 and mes<=8) and (dia>=1 and dia<=20)))) or ((hemisferio=='s' or hemisferio=='S') and ((mes==11 and dia>=21) or ((mes>=11 and mes<=12 or mes==1) and (dia>=1 and dia<=20)))):
     print("Verano")
 else:
     print("Otoño")
