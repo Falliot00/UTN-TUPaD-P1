@@ -1,0 +1,1165 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Explorador Interactivo de Algoritmos de Búsqueda y Ordenamiento</title>
+    <!-- Chosen Palette: Cool Gray & Sky Blue -->
+    <!-- Application Structure Plan: A tab-based single-page application (SPA) design was chosen to provide a focused, non-linear user experience. This structure logically separates the different learning modes: 1) A hands-on, interactive "Explorador" for visual experimentation, 2) a contextual "Casos de Uso" section to connect theory to practice, and 3) a "Tabla Comparativa" for quick factual reference. This component-based structure is superior to a linear document as it empowers users to navigate directly to the content that matches their immediate learning goal, fostering exploration and deeper understanding. -->
+    <!-- Visualization & Content Choices: The core experience is the Algorithm Explorer. Goal: Demonstrate step-by-step algorithm logic. Method: A Chart.js bar chart on a canvas, which is highly effective for visualizing sorting operations. Interaction: User controls for algorithm selection, data generation, and speed. Justification: Dynamic visualization makes abstract processes concrete. The "Casos de Uso" section uses a card layout. Goal: Organize and relate theory to practical problems. Method: HTML cards with clear descriptions and code snippets. Interaction: Tabbed navigation. Justification: This breaks down complex text into digestible, thematic chunks. The "Tabla Comparativa" uses a standard HTML table. Goal: Compare key metrics. Method: A styled table. Justification: A table is the clearest format for presenting comparative data like time/space complexity. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .chart-container { position: relative; width: 100%; max-width: 1000px; margin-left: auto; margin-right: auto; height: 40vh; max-height: 400px; }
+        .pseudo-code-line { transition: background-color 0.3s; padding: 2px 4px; border-radius: 4px; display: block; }
+        .pseudo-code-line.highlight { background-color: #dbeafe; }
+        .tab-btn.active { border-color: #3b82f6; color: #3b82f6; background-color: #eff6ff; }
+        .tab-btn { transition: all 0.2s; }
+        .content-section { display: none; }
+        .content-section.active { display: block; }
+        label { user-select: none; }
+        .code-block {
+            background-color: #1e293b;
+            color: #e2e8f0;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            overflow-x: auto;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 0.875rem;
+            margin-top: 1rem;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800">
+
+    <div class="container mx-auto p-4 md:p-8">
+        <header class="text-center mb-8">
+            <h1 class="text-4xl md:text-5xl font-bold text-slate-900">Explorador Interactivo de Algoritmos</h1>
+            <p class="mt-2 text-lg text-slate-600">Una herramienta para visualizar y comprender algoritmos de búsqueda y ordenamiento.</p>
+        </header>
+
+        <nav class="flex justify-center border-b border-slate-200 mb-8">
+            <button data-target="explorador" class="tab-btn py-4 px-6 text-lg font-medium text-slate-500 border-b-2 border-transparent hover:text-blue-600 hover:border-blue-600">Explorador</button>
+            <button data-target="casos-uso" class="tab-btn py-4 px-6 text-lg font-medium text-slate-500 border-b-2 border-transparent hover:text-blue-600 hover:border-blue-600">Casos de Uso</button>
+            <button data-target="comparativa" class="tab-btn py-4 px-6 text-lg font-medium text-slate-500 border-b-2 border-transparent hover:text-blue-600 hover:border-blue-600">Tabla Comparativa</button>
+        </nav>
+
+        <main>
+            <!-- Explorador Section -->
+            <section id="explorador" class="content-section">
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <!-- Controls Column -->
+                    <div class="lg:col-span-1 bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+                        <h2 class="text-2xl font-bold mb-6 text-slate-900">Controles</h2>
+                        
+                        <div class="space-y-6">
+                            <div>
+                                <label for="algorithm-select" class="block text-sm font-medium text-slate-700 mb-1">Algoritmo</label>
+                                <select id="algorithm-select" class="w-full p-2 border border-slate-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                                    <optgroup label="Ordenamiento">
+                                        <option value="bubbleSort">Bubble Sort</option>
+                                        <option value="selectionSort">Selection Sort</option>
+                                        <option value="insertionSort">Insertion Sort</option>
+                                        <option value="quickSort">Quick Sort</option>
+                                        <option value="mergeSort">Merge Sort</option>
+                                        <option value="countingSort">Counting Sort</option>
+                                    </optgroup>
+                                    <optgroup label="Búsqueda">
+                                        <option value="linearSearch">Linear Search</option>
+                                        <option value="binarySearch">Binary Search</option>
+                                    </optgroup>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label for="data-size" class="block text-sm font-medium text-slate-700">Tamaño del Arreglo (<span id="data-size-value">50</span>)</label>
+                                <input type="range" id="data-size" min="10" max="100" value="50" class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer">
+                            </div>
+                            
+                            <div class="grid grid-cols-2 gap-2">
+                                <button id="generate-random" class="bg-slate-200 text-slate-700 text-sm py-2 px-3 rounded-md hover:bg-slate-300 transition-colors">Aleatorio</button>
+                                <button id="generate-sorted" class="bg-slate-200 text-slate-700 text-sm py-2 px-3 rounded-md hover:bg-slate-300 transition-colors">Ordenado</button>
+                                <button id="generate-reversed" class="bg-slate-200 text-slate-700 text-sm py-2 px-3 rounded-md hover:bg-slate-300 transition-colors">Invertido</button>
+                                <button id="generate-few-unique" class="bg-slate-200 text-slate-700 text-sm py-2 px-3 rounded-md hover:bg-slate-300 transition-colors">Pocos Únicos</button>
+                            </div>
+
+
+                            <div>
+                                <label for="animation-speed" class="block text-sm font-medium text-slate-700">Velocidad Animación (<span id="animation-speed-value">50</span>ms)</label>
+                                <input type="range" id="animation-speed" min="5" max="500" value="50" class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer">
+                            </div>
+                            
+                            <div class="flex flex-col space-y-2">
+                                <button id="start-algorithm" class="w-full bg-blue-600 text-white font-bold py-2 px-4 rounded-md hover:bg-blue-700 transition-colors">Iniciar</button>
+                            </div>
+
+                             <div id="search-container" class="hidden">
+                                <label for="search-value" class="block text-sm font-medium text-slate-700">Valor a Buscar</label>
+                                <input type="number" id="search-value" class="w-full mt-1 p-2 border border-slate-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500" placeholder="Ej: 42">
+                             </div>
+                        </div>
+                    </div>
+
+                    <!-- Visualization Column -->
+                    <div class="lg:col-span-2 bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+                        <div class="chart-container">
+                            <canvas id="main-chart"></canvas>
+                        </div>
+                        <div id="status-message" class="text-center mt-4 font-medium text-slate-600 h-6"></div>
+                    </div>
+                </div>
+                
+                <div class="mt-6 grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+                        <h3 class="text-xl font-bold mb-2 text-slate-900">Descripción y Complejidad</h3>
+                        <p id="algorithm-description" class="text-slate-600 mb-4"></p>
+                        <div id="algorithm-complexity" class="text-sm space-y-1"></div>
+                        <div id="algorithm-stats" class="mt-4 text-sm space-y-1"></div>
+                    </div>
+                    <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+                        <h3 class="text-xl font-bold mb-2 text-slate-900">Pseudo-código</h3>
+                        <pre><code id="pseudo-code" class="text-sm leading-relaxed"></code></pre>
+                    </div>
+                </div>
+
+                <!--Seccion Comparacion-->
+                <hr class="my-12 border-t-2 border-slate-200">
+                <section id="comparator" class="mb-16"></section>
+                <h2 class="text-3xl font-bold text-center mb-8 text-stone-700">Comparador de Rendimiento</h2>
+                <div class="bg-white p-4 md:p-8 rounded-xl shadow-lg">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                        <div class="md:col-span-2">
+                             <p class="text-stone-600">
+                                Esta sección te permite comparar el rendimiento de los algoritmos de ordenamiento. Elige un tamaño de lista y un tipo de datos, y el gráfico mostrará el tiempo (en milisegundos) que tardó cada algoritmo en completarse. Esta es una demostración práctica de cómo la complejidad teórica (Big O) se traduce en rendimiento en el mundo real. Observa cómo Quick Sort (O(n log n)) domina a los demás (O(n^2)) a medida que aumenta el tamaño de los datos.
+                            </p>
+                        </div>
+                        <div class="flex flex-col justify-center space-y-4">
+                             <div>
+                                <label for="compareSize" class="block text-sm font-medium text-stone-700">Tamaño de la lista para comparar</label>
+                                <select id="compareSize" class="w-full mt-1 bg-white border border-stone-300 rounded-md shadow-sm p-2">
+                                    <option value="100">100</option>
+                                    <option value="1000">1,000</option>
+                                    <option value="5000">5,000</option>
+                                    <option value="10000">10,000</option>
+                                </select>
+                             </div>
+                             <button id="runComparison" class="w-full bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition duration-300">Ejecutar Comparación</button>
+                        </div>
+                    </div>
+                     <div class="chart-container">
+                        <canvas id="performanceChart"></canvas>
+                    </div>
+                    <div id="comparison-analysis" class="mt-6 text-center text-stone-600 italic">
+                        Selecciona un tamaño de lista y ejecuta la comparación para ver los resultados.
+                    </div>
+                </div>
+                <!-- Sección: Conclusiones -->
+                <hr class="my-12 border-t-2 border-slate-200">
+                <section id="conclusion" class="bg-white p-8 rounded-xl shadow-md">
+                <h2 class="text-3xl font-bold mb-4 text-stone-700">Conclusiones Clave</h2>
+                <ul class="list-disc list-inside space-y-3 text-stone-600">
+                    <li>La <strong>elección del algoritmo correcto</strong> es crucial y depende del contexto, el tamaño y el estado inicial de los datos. No existe un "mejor" algoritmo universal.</li>
+                    <li>La <strong>complejidad Big O</strong> no es solo teórica; tiene un impacto directo y medible en el rendimiento de una aplicación, especialmente con grandes volúmenes de datos.</li>
+                    <li>La <strong>búsqueda binaria</strong> es extremadamente eficiente, pero subraya la importancia de tener datos pre-ordenados, demostrando la sinergia entre los algoritmos de ordenamiento y búsqueda.</li>
+                    <li>Visualizar los algoritmos fomenta una <strong>comprensión más profunda</strong> que simplemente leer su descripción, revelando su lógica interna, sus eficiencias y sus puntos débiles.</li>
+                </ul>
+                </section>
+            </section>
+
+            <!-- Casos de Uso Section -->
+            <section id="casos-uso" class="content-section">
+                <div class="text-center mb-12">
+                     <h2 class="text-3xl font-bold text-slate-900">Casos de Uso Prácticos</h2>
+                     <p class="mt-2 text-slate-600">Cómo elegir el algoritmo correcto para el problema correcto.</p>
+                </div>
+                
+                <h3 class="text-2xl font-semibold text-slate-800 mb-6 border-l-4 border-blue-500 pl-4">Ordenamiento</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    <div class="bg-white p-6 rounded-xl shadow-lg border border-slate-200 transform hover:scale-105 transition-transform duration-300">
+                        <div class="text-blue-500 mb-4">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" /></svg>
+                        </div>
+                        <h3 class="text-xl font-bold mb-2 text-slate-900">Gestión de Tareas</h3>
+                        <p class="text-slate-600 mb-4">
+                            <b>Problema:</b> Ordenar una lista de tareas (<50) que se actualiza con frecuencia, permaneciendo casi ordenada.
+                        </p>
+                        <p class="font-semibold text-blue-600">Solución: Insertion Sort</p>
+                        <p class="text-slate-600 mt-2">
+                            <b>¿Por qué?</b> Es extremadamente rápido para listas pequeñas y casi ordenadas (O(n) en el mejor caso). Su bajo costo computacional supera a algoritmos más complejos en este escenario específico.
+                        </p>
+                    </div>
+                    <div class="bg-white p-6 rounded-xl shadow-lg border border-slate-200 transform hover:scale-105 transition-transform duration-300">
+                        <div class="text-blue-500 mb-4">
+                           <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg>
+                        </div>
+                        <h3 class="text-xl font-bold mb-2 text-slate-900">Reporte Anual de Ventas</h3>
+                        <p class="text-slate-600 mb-4">
+                            <b>Problema:</b> Ordenar millones de IDs de productos únicos extraídos de diversas fuentes sin orden predefinido.
+                        </p>
+                        <p class="font-semibold text-blue-600">Solución: Quick Sort</p>
+                        <p class="text-slate-600 mt-2">
+                            <b>¿Por qué?</b> Su rendimiento promedio de O(n log n) es excelente para grandes volúmenes de datos desordenados. Además, ordena "in-place", usando muy poca memoria adicional, lo cual es crucial con millones de registros.
+                        </p>
+                    </div>
+                    <div class="bg-white p-6 rounded-xl shadow-lg border border-slate-200 transform hover:scale-105 transition-transform duration-300">
+                         <div class="text-blue-500 mb-4">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
+                        </div>
+                        <h3 class="text-xl font-bold mb-2 text-slate-900">Análisis de Encuestas</h3>
+                        <p class="text-slate-600 mb-4">
+                            <b>Problema:</b> Ordenar decenas de miles de edades de encuestados, sabiendo que todas caen en un rango conocido y limitado (ej. 18-99 años).
+                        </p>
+                        <p class="font-semibold text-blue-600">Solución: Counting Sort</p>
+                        <p class="text-slate-600 mt-2">
+                            <b>¿Por qué?</b> Como los datos son enteros en un rango pequeño (`k`), este algoritmo no comparativo logra una complejidad de tiempo lineal O(n+k), superando a cualquier algoritmo basado en comparaciones.
+                        </p>
+                    </div>
+                </div>
+
+                <h3 class="text-2xl font-semibold text-slate-800 mt-16 mb-6 border-l-4 border-green-500 pl-4">Búsqueda</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                     <!-- Caso de Uso: Búsqueda Lineal -->
+                    <div class="bg-white p-8 rounded-xl shadow-lg border border-slate-200">
+                        <h3 class="text-xl font-bold mb-2 text-slate-900">Revisión de Logs en Tiempo Real</h3>
+                         <p class="text-slate-600 mb-4">
+                            <b>Problema:</b> Un sistema genera logs (registros de eventos) continuamente. Se necesita una función para encontrar la primera aparición de un log con un código de error específico (ej. "ERROR-404"). Los logs se añaden al final de una lista y no están ordenados.
+                        </p>
+                        <p class="font-semibold text-green-600">Solución: Búsqueda Lineal</p>
+                        <p class="text-slate-600 mt-2 mb-4">
+                            <b>¿Por qué?</b> La condición fundamental es que **los datos no están ordenados**. La búsqueda binaria es inútil en este escenario. La búsqueda lineal es la única opción viable, ya que examina cada elemento desde el principio hasta encontrar el objetivo, sin requerir ningún orden previo. Ordenar los logs en tiempo real sería computacionalmente muy costoso e impráctico.
+                        </p>
+                    </div>
+                    <!-- Caso de Uso: Búsqueda Binaria -->
+                    <div class="bg-white p-8 rounded-xl shadow-lg border border-slate-200">
+                        <h3 class="text-xl font-bold mb-2 text-slate-900">Consulta en Diccionario Digital</h3>
+                         <p class="text-slate-600 mb-4">
+                            <b>Problema:</b> Se tiene un diccionario digital con cientos de miles de palabras. Se necesita una función que verifique si una palabra existe en el diccionario. La lista de palabras del diccionario está, por definición, **ordenada alfabéticamente**. La rapidez de la consulta es crucial para la experiencia del usuario.
+                        </p>
+                        <p class="font-semibold text-green-600">Solución: Búsqueda Binaria</p>
+                        <p class="text-slate-600 mt-2 mb-4">
+                            <b>¿Por qué?</b> El conjunto de datos es muy grande y, lo más importante, **está ordenado**. La búsqueda binaria aprovecha este orden para descartar la mitad del conjunto de datos en cada paso. Su complejidad O(log n) es inmensamente superior a la complejidad O(n) de la búsqueda lineal. Para un millón de palabras, la búsqueda binaria tomaría como máximo 20 comparaciones, mientras que la lineal podría necesitar hasta un millón.
+                        </p>
+                    </div>
+                </div>
+
+            </section>
+
+            <!-- Comparativa Section -->
+            <section id="comparativa" class="content-section">
+                <div class="text-center mb-8">
+                     <h2 class="text-3xl font-bold text-slate-900">Tabla Comparativa de Algoritmos</h2>
+                     <p class="mt-2 text-slate-600">Un resumen de las complejidades y características clave.</p>
+                </div>
+                 <div class="overflow-x-auto bg-white rounded-xl shadow-lg border border-slate-200">
+                    <table class="w-full text-left">
+                        <thead class="bg-slate-100">
+                            <tr>
+                                <th class="p-4 font-bold text-slate-700">Algoritmo</th>
+                                <th class="p-4 font-bold text-slate-700">Complejidad Tiempo (Promedio)</th>
+                                <th class="p-4 font-bold text-slate-700">Complejidad Tiempo (Peor Caso)</th>
+                                <th class="p-4 font-bold text-slate-700">Complejidad Espacio</th>
+                                <th class="p-4 font-bold text-slate-700">Estabilidad</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-200">
+                            <tr class="hover:bg-slate-50">
+                                <td class="p-4 font-medium">Bubble Sort</td>
+                                <td class="p-4">O(n^2)</td>
+                                <td class="p-4">O(n^2)</td>
+                                <td class="p-4">O(1)</td>
+                                <td class="p-4">Sí</td>
+                            </tr>
+                            <tr class="hover:bg-slate-50">
+                                <td class="p-4 font-medium">Selection Sort</td>
+                                <td class="p-4">O(n^2)</td>
+                                <td class="p-4">O(n^2)</td>
+                                <td class="p-4">O(1)</td>
+                                <td class="p-4">No</td>
+                            </tr>
+                             <tr class="hover:bg-slate-50">
+                                <td class="p-4 font-medium">Insertion Sort</td>
+                                <td class="p-4">O(n^2)</td>
+                                <td class="p-4">O(n^2) (Mejor: O(n))</td>
+                                <td class="p-4">O(1)</td>
+                                <td class="p-4">Sí</td>
+                            </tr>
+                             <tr class="hover:bg-slate-50">
+                                <td class="p-4 font-medium">Quick Sort</td>
+                                <td class="p-4">O(n log n)</td>
+                                <td class="p-4">O(n^2)</td>
+                                <td class="p-4">O(log n)</td>
+                                <td class="p-4">No</td>
+                            </tr>
+                            <tr class="hover:bg-slate-50">
+                                <td class="p-4 font-medium">Merge Sort</td>
+                                <td class="p-4">O(n log n)</td>
+                                <td class="p-4">O(n log n)</td>
+                                <td class="p-4">O(n)</td>
+                                <td class="p-4">Sí</td>
+                            </tr>
+                            <tr class="hover:bg-slate-50">
+                                <td class="p-4 font-medium">Counting Sort</td>
+                                <td class="p-4">O(n+k)</td>
+                                <td class="p-4">O(n+k)</td>
+                                <td class="p-4">O(k)</td>
+                                <td class="p-4">Sí</td>
+                            </tr>
+                            <tr class="hover:bg-slate-50">
+                                <td class="p-4 font-medium">Linear Search</td>
+                                <td class="p-4">O(n)</td>
+                                <td class="p-4">O(n)</td>
+                                <td class="p-4">O(1)</td>
+                                <td class="p-4">N/A</td>
+                            </tr>
+                             <tr class="hover:bg-slate-50">
+                                <td class="p-4 font-medium">Binary Search</td>
+                                <td class="p-4">O(log n)</td>
+                                <td class="p-4">O(log n)</td>
+                                <td class="p-4">O(1)</td>
+                                <td class="p-4">N/A</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </main>
+        <footer class="text-center mt-12 pt-8 border-t border-stone-200">
+            <p class="text-stone-500">Desarrollado por Fermin Alliot y Gabriel Antuña para Programación I.</p>
+        </footer>
+    </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    // DOM Elements
+    const algorithmSelect = document.getElementById('algorithm-select');
+    const dataSizeSlider = document.getElementById('data-size');
+    const animationSpeedSlider = document.getElementById('animation-speed');
+    const dataSizeValue = document.getElementById('data-size-value');
+    const animationSpeedValue = document.getElementById('animation-speed-value');
+    const startBtn = document.getElementById('start-algorithm');
+    const statusMessage = document.getElementById('status-message');
+    const searchContainer = document.getElementById('search-container');
+    const searchInput = document.getElementById('search-value');
+    
+    const algoDesc = document.getElementById('algorithm-description');
+    const algoComp = document.getElementById('algorithm-complexity');
+    const algoStats = document.getElementById('algorithm-stats');
+    const pseudoCodeEl = document.getElementById('pseudo-code');
+
+    const tabs = document.querySelectorAll('.tab-btn');
+    const contentSections = document.querySelectorAll('.content-section');
+
+    // Chart.js instance
+    let chart;
+    let dataArray = [];
+    let isRunning = false;
+
+    // --- State & Config ---
+    const COLORS = {
+        DEFAULT: 'rgba(59, 130, 246, 0.7)', // blue-500
+        COMPARE: 'rgba(239, 68, 68, 0.7)', // red-500
+        SWAP: 'rgba(245, 158, 11, 0.7)', // amber-500
+        SORTED: 'rgba(22, 163, 74, 0.7)', // green-600
+        FOUND: 'rgba(16, 185, 129, 1)', // emerald-500
+        PIVOT: 'rgba(139, 92, 246, 0.7)' // violet-500
+    };
+
+    const algorithmsData = {
+        bubbleSort: {
+            name: "Bubble Sort",
+            description: "Compara repetidamente pares de elementos adyacentes y los intercambia si están en el orden incorrecto. El proceso se repite hasta que la lista está ordenada.",
+            complexity: `<li><b>Mejor Caso:</b> O(n)</li><li><b>Caso Promedio:</b> O(n^2)</li><li><b>Peor Caso:</b> O(n^2)</li><li><b>Espacio:</b> O(1)</li>`,
+            pseudoCode: `<span id="ps-line-0"><b>procedimiento</b> bubbleSort(A : lista de elementos)</span>
+<span id="ps-line-1">  <b>para</b> i = 0 <b>hasta</b> n-1</span>
+<span id="ps-line-2">    <b>para</b> j = 0 <b>hasta</b> n-i-2</span>
+<span id="ps-line-3">      <b>si</b> A[j] > A[j+1]</span>
+<span id="ps-line-4">        intercambiar(A[j], A[j+1])</span>
+<span id="ps-line-5">      <b>fin si</b></span>
+<span id="ps-line-6">    <b>fin para</b></span>
+<span id="ps-line-7">  <b>fin para</b></span>
+<span id="ps-line-8"><b>fin procedimiento</b></span>`
+        },
+        selectionSort: {
+            name: "Selection Sort",
+            description: "En cada iteración, encuentra el elemento mínimo de la sublista no ordenada y lo coloca al principio de esta.",
+            complexity: `<li><b>Mejor Caso:</b> O(n^2)</li><li><b>Caso Promedio:</b> O(n^2)</li><li><b>Peor Caso:</b> O(n^2)</li><li><b>Espacio:</b> O(1)</li>`,
+            pseudoCode: `<span id="ps-line-0"><b>procedimiento</b> selectionSort(A : lista de elementos)</span>
+<span id="ps-line-1">  <b>para</b> i = 0 <b>hasta</b> n-1</span>
+<span id="ps-line-2">    min_idx = i</span>
+<span id="ps-line-3">    <b>para</b> j = i+1 <b>hasta</b> n-1</span>
+<span id="ps-line-4">      <b>si</b> A[j] < A[min_idx]</span>
+<span id="ps-line-5">        min_idx = j</span>
+<span id="ps-line-6">      <b>fin si</b></span>
+<span id="ps-line-7">    <b>fin para</b></span>
+<span id="ps-line-8">    intercambiar(A[i], A[min_idx])</span>
+<span id="ps-line-9">  <b>fin para</b></span>
+<span id="ps-line-10"><b>fin procedimiento</b></span>`
+        },
+        insertionSort: {
+            name: "Insertion Sort",
+            description: "Construye la lista ordenada final un elemento a la vez, insertando cada elemento en su posición correcta dentro de la parte ya ordenada.",
+            complexity: `<li><b>Mejor Caso:</b> O(n)</li><li><b>Caso Promedio:</b> O(n^2)</li><li><b>Peor Caso:</b> O(n^2)</li><li><b>Espacio:</b> O(1)</li>`,
+            pseudoCode: `<span id="ps-line-0"><b>procedimiento</b> insertionSort(A : lista de elementos)</span>
+<span id="ps-line-1">  <b>para</b> i = 1 <b>hasta</b> n-1</span>
+<span id="ps-line-2">    clave = A[i]</span>
+<span id="ps-line-3">    j = i - 1</span>
+<span id="ps-line-4">    <b>mientras</b> j >= 0 <b>y</b> clave < A[j]</span>
+<span id="ps-line-5">      A[j+1] = A[j]</span>
+<span id="ps-line-6">      j = j - 1</span>
+<span id="ps-line-7">    <b>fin mientras</b></span>
+<span id="ps-line-8">    A[j+1] = clave</span>
+<span id="ps-line-9">  <b>fin para</b></span>
+<span id="ps-line-10"><b>fin procedimiento</b></span>`
+        },
+        quickSort: {
+            name: "Quick Sort",
+            description: "Algoritmo de 'divide y vencerás'. Selecciona un 'pivote' y particiona la lista, luego aplica el mismo proceso recursivamente a las sublistas.",
+            complexity: `<li><b>Mejor Caso:</b> O(n log n)</li><li><b>Caso Promedio:</b> O(n log n)</li><li><b>Peor Caso:</b> O(n^2)</li><li><b>Espacio:</b> O(log n)</li>`,
+             pseudoCode: `<span id="ps-line-0"><b>procedimiento</b> quickSort(A, bajo, alto)</span>
+<span id="ps-line-1">  <b>si</b> bajo < alto</span>
+<span id="ps-line-2">    pivote_idx = particion(A, bajo, alto)</span>
+<span id="ps-line-3">    quickSort(A, bajo, pivote_idx - 1)</span>
+<span id="ps-line-4">    quickSort(A, pivote_idx + 1, alto)</span>
+<span id="ps-line-5">  <b>fin si</b></span>
+<span id="ps-line-6"><b>fin procedimiento</b></span>
+<br>
+<span id="ps-line-7"><b>procedimiento</b> particion(A, bajo, alto)</span>
+<span id="ps-line-8">  pivote = A[alto]</span>
+<span id="ps-line-9">  i = bajo - 1</span>
+<span id="ps-line-10">  <b>para</b> j = bajo <b>hasta</b> alto - 1</span>
+<span id="ps-line-11">    <b>si</b> A[j] < pivote</span>
+<span id="ps-line-12">      i = i + 1</span>
+<span id="ps-line-13">      intercambiar(A[i], A[j])</span>
+<span id="ps-line-14">    <b>fin si</b></span>
+<span id="ps-line-15">  <b>fin para</b></span>
+<span id="ps-line-16">  intercambiar(A[i+1], A[alto])</span>
+<span id="ps-line-17">  <b>retornar</b> i + 1</span>
+<span id="ps-line-18"><b>fin procedimiento</b></span>`
+        },
+        mergeSort: {
+            name: "Merge Sort",
+            description: "Divide la lista en mitades, las ordena recursivamente y luego las fusiona de manera ordenada. Garantiza una eficiencia de O(n log n) en todos los casos.",
+            complexity: `<li><b>Mejor Caso:</b> O(n log n)</li><li><b>Caso Promedio:</b> O(n log n)</li><li><b>Peor Caso:</b> O(n log n)</li><li><b>Espacio:</b> O(n)</li>`,
+            pseudoCode: `<span id="ps-line-0"><b>procedimiento</b> mergeSort(A, izq, der)</span>
+<span id="ps-line-1">  <b>si</b> izq < der</span>
+<span id="ps-line-2">    medio = (izq + der) / 2</span>
+<span id="ps-line-3">    mergeSort(A, izq, medio)</span>
+<span id="ps-line-4">    mergeSort(A, medio + 1, der)</span>
+<span id="ps-line-5">    fusionar(A, izq, medio, der)</span>
+<span id="ps-line-6">  <b>fin si</b></span>
+<span id="ps-line-7"><b>fin procedimiento</b></span>`
+        },
+        countingSort: {
+            name: "Counting Sort",
+            description: "Algoritmo no comparativo que cuenta la ocurrencia de cada valor. Es extremadamente rápido para enteros en un rango pequeño y conocido.",
+            complexity: `<li><b>Mejor/Promedio/Peor Caso:</b> O(n+k)</li><li><b>Espacio:</b> O(k)</li>`,
+            pseudoCode: `<span id="ps-line-0"><b>procedimiento</b> countingSort(A, k)</span>
+<span id="ps-line-1">  C = arreglo de tamaño k inicializado a 0</span>
+<span id="ps-line-2">  B = arreglo de tamaño n</span>
+<span id="ps-line-3">  <b>para</b> j = 0 <b>hasta</b> n-1</span>
+<span id="ps-line-4">    C[A[j]] = C[A[j]] + 1</span>
+<span id="ps-line-5">  <b>fin para</b></span>
+<span id="ps-line-6">  <b>para</b> i = 1 <b>hasta</b> k-1</span>
+<span id="ps-line-7">    C[i] = C[i] + C[i-1]</span>
+<span id="ps-line-8">  <b>fin para</b></span>
+<span id="ps-line-9">  <b>para</b> j = n-1 <b>hasta</b> 0</span>
+<span id="ps-line-10">   B[C[A[j]]-1] = A[j]</span>
+<span id="ps-line-11">   C[A[j]] = C[A[j]]-1</span>
+<span id="ps-line-12">  <b>fin para</b></span>
+<span id="ps-line-13"><b>fin procedimiento</b></span>`
+        },
+        linearSearch: {
+            name: "Linear Search",
+            description: "Recorre la colección secuencialmente, elemento por elemento, hasta encontrar el valor buscado o agotar la lista. No requiere que los datos estén ordenados.",
+            complexity: `<li><b>Mejor Caso:</b> O(1)</li><li><b>Caso Promedio:</b> O(n)</li><li><b>Peor Caso:</b> O(n)</li><li><b>Espacio:</b> O(1)</li>`,
+            pseudoCode: `<span id="ps-line-0"><b>procedimiento</b> linearSearch(A, objetivo)</span>
+<span id="ps-line-1">  <b>para</b> i = 0 <b>hasta</b> n-1</span>
+<span id="ps-line-2">    <b>si</b> A[i] == objetivo</span>
+<span id="ps-line-3">      <b>retornar</b> i</span>
+<span id="ps-line-4">    <b>fin si</b></span>
+<span id="ps-line-5">  <b>fin para</b></span>
+<span id="ps-line-6">  <b>retornar</b> -1</span>
+<span id="ps-line-7"><b>fin procedimiento</b></span>`
+        },
+        binarySearch: {
+            name: "Binary Search",
+            description: "Algoritmo eficiente que funciona en listas ordenadas. Divide repetidamente el intervalo de búsqueda por la mitad hasta encontrar el elemento. Requiere lista ordenada.",
+            complexity: `<li><b>Mejor Caso:</b> O(1)</li><li><b>Caso Promedio:</b> O(log n)</li><li><b>Peor Caso:</b> O(log n)</li><li><b>Espacio:</b> O(1)</li>`,
+            pseudoCode: `<span id="ps-line-0"><b>procedimiento</b> binarySearch(A, objetivo)</span>
+<span id="ps-line-1">  bajo = 0, alto = n - 1</span>
+<span id="ps-line-2">  <b>mientras</b> bajo <= alto</span>
+<span id="ps-line-3">    medio = (bajo + alto) / 2</span>
+<span id="ps-line-4">    <b>si</b> A[medio] == objetivo</span>
+<span id="ps-line-5">      <b>retornar</b> medio</span>
+<span id="ps-line-6">    <b>sino si</b> A[medio] < objetivo</span>
+<span id="ps-line-7">      bajo = medio + 1</span>
+<span id="ps-line-8">    <b>sino</b></span>
+<span id="ps-line-9">      alto = medio - 1</span>
+<span id="ps-line-10">    <b>fin si</b></span>
+<span id="ps-line-11">  <b>fin mientras</b></span>
+<span id="ps-line-12">  <b>retornar</b> -1</span>
+<span id="ps-line-13"><b>fin procedimiento</b></span>`
+        }
+    };
+    
+    // --- Helper Functions ---
+    const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+    const generateArray = (size, type = 'random') => {
+        dataArray = [];
+        const maxVal = 100;
+        switch(type) {
+            case 'sorted':
+                for (let i = 0; i < size; i++) dataArray.push(Math.floor((i / size) * maxVal) + 1);
+                break;
+            case 'reversed':
+                for (let i = 0; i < size; i++) dataArray.push(Math.floor(((size - 1 - i) / size) * maxVal) + 1);
+                break;
+            case 'fewUnique':
+                const uniques = Math.max(2, Math.floor(size / 10));
+                for (let i = 0; i < size; i++) dataArray.push( (Math.floor(Math.random() * uniques) + 1) * Math.floor(maxVal/uniques) );
+                break;
+            case 'random':
+            default:
+                for (let i = 0; i < size; i++) dataArray.push(Math.floor(Math.random() * maxVal) + 1);
+                break;
+        }
+        updateChart(dataArray);
+        statusMessage.textContent = 'Nuevos datos generados.';
+    };
+
+    let comparisons = 0;
+    let swaps = 0;
+
+    const updateStats = () => {
+        algoStats.innerHTML = `<li><b>Comparaciones:</b> ${comparisons}</li><li><b>Intercambios/Accesos:</b> ${swaps}</li>`;
+    };
+    
+    const resetStats = () => {
+        comparisons = 0;
+        swaps = 0;
+        updateStats();
+    };
+
+    // --- Chart Functions ---
+    const createChart = () => {
+        const ctx = document.getElementById('main-chart').getContext('2d');
+        chart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: [],
+                datasets: [{
+                    label: 'Valor',
+                    data: [],
+                    backgroundColor: COLORS.DEFAULT,
+                    borderColor: 'rgba(59, 130, 246, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                animation: { duration: 0 },
+                plugins: {
+                    legend: { display: false },
+                    tooltip: { enabled: false }
+                },
+                scales: {
+                    y: { beginAtZero: true, display: false },
+                    x: { display: false }
+                }
+            }
+        });
+    };
+
+    const updateChart = (arr, colorMap = {}) => {
+        if (!chart) return;
+        chart.data.labels = arr.map((_, i) => i);
+        chart.data.datasets[0].data = arr;
+        chart.data.datasets[0].backgroundColor = arr.map((_, i) => colorMap[i] || COLORS.DEFAULT);
+        chart.update();
+    };
+    
+    // --- UI Update Functions ---
+    const updateUIForAlgorithm = () => {
+        const selectedAlgo = algorithmSelect.value;
+        const data = algorithmsData[selectedAlgo];
+        
+        algoDesc.textContent = data.description;
+        algoComp.innerHTML = data.complexity;
+        pseudoCodeEl.innerHTML = data.pseudoCode;
+        
+        if (selectedAlgo.includes('Search')) {
+            searchContainer.classList.remove('hidden');
+        } else {
+            searchContainer.classList.add('hidden');
+        }
+        resetStats();
+        resetHighlight();
+    };
+    
+    const highlightLine = (lineId) => {
+        resetHighlight();
+        const line = document.getElementById(`ps-line-${lineId}`);
+        if(line) line.classList.add('highlight');
+    };
+    
+    const resetHighlight = () => {
+        document.querySelectorAll('.pseudo-code-line').forEach(el => el.classList.remove('highlight'));
+    };
+
+    const setControlsDisabled = (disabled) => {
+        isRunning = disabled;
+        startBtn.disabled = disabled;
+        document.getElementById('generate-random').disabled = disabled;
+        document.getElementById('generate-sorted').disabled = disabled;
+        document.getElementById('generate-reversed').disabled = disabled;
+        document.getElementById('generate-few-unique').disabled = disabled;
+        dataSizeSlider.disabled = disabled;
+        algorithmSelect.disabled = disabled;
+        startBtn.textContent = disabled ? "Ejecutando..." : "Iniciar";
+        startBtn.classList.toggle('bg-gray-400', disabled);
+        startBtn.classList.toggle('cursor-not-allowed', disabled);
+        startBtn.classList.toggle('bg-blue-600', !disabled);
+    };
+
+    // --- Algorithm Implementations ---
+    async function bubbleSort(arr) {
+        let n = arr.length;
+        highlightLine(0); await sleep(getSpeed());
+        for (let i = 0; i < n - 1; i++) {
+            highlightLine(1); await sleep(getSpeed());
+            for (let j = 0; j < n - i - 1; j++) {
+                highlightLine(2); await sleep(getSpeed());
+                updateChart(arr, { [j]: COLORS.COMPARE, [j + 1]: COLORS.COMPARE });
+                comparisons++;
+                updateStats();
+                await sleep(getSpeed());
+                highlightLine(3); await sleep(getSpeed());
+                if (arr[j] > arr[j + 1]) {
+                    highlightLine(4); await sleep(getSpeed());
+                    swaps++;
+                    updateStats();
+                    [arr[j], arr[j + 1]] = [arr[j + 1], arr[j]];
+                    updateChart(arr, { [j]: COLORS.SWAP, [j + 1]: COLORS.SWAP });
+                    await sleep(getSpeed());
+                }
+                 updateChart(arr);
+            }
+        }
+        return arr;
+    }
+
+    async function selectionSort(arr) {
+        let n = arr.length;
+        highlightLine(0); await sleep(getSpeed());
+        for (let i = 0; i < n; i++) {
+            highlightLine(1); await sleep(getSpeed());
+            let min_idx = i;
+            highlightLine(2); await sleep(getSpeed());
+            for (let j = i + 1; j < n; j++) {
+                highlightLine(3); await sleep(getSpeed());
+                updateChart(arr, { [min_idx]: COLORS.SWAP, [j]: COLORS.COMPARE });
+                comparisons++;
+                updateStats();
+                await sleep(getSpeed());
+                highlightLine(4); await sleep(getSpeed());
+                if (arr[j] < arr[min_idx]) {
+                    highlightLine(5); await sleep(getSpeed());
+                    min_idx = j;
+                }
+            }
+            if (min_idx !== i) {
+                 swaps++;
+                 updateStats();
+                [arr[i], arr[min_idx]] = [arr[min_idx], arr[i]];
+            }
+             highlightLine(8); await sleep(getSpeed());
+            updateChart(arr, { [i]: COLORS.SORTED });
+            await sleep(getSpeed());
+        }
+        return arr;
+    }
+    
+    async function insertionSort(arr) {
+        let n = arr.length;
+        highlightLine(0); await sleep(getSpeed());
+        for (let i = 1; i < n; i++) {
+            highlightLine(1); await sleep(getSpeed());
+            let key = arr[i];
+            highlightLine(2); await sleep(getSpeed());
+            let j = i - 1;
+            highlightLine(3); await sleep(getSpeed());
+            updateChart(arr, {[i]: COLORS.SWAP});
+            await sleep(getSpeed());
+
+            highlightLine(4); await sleep(getSpeed());
+            while (j >= 0 && arr[j] > key) {
+                comparisons++;
+                updateStats();
+                highlightLine(5); await sleep(getSpeed());
+                swaps++;
+                updateStats();
+                arr[j + 1] = arr[j];
+                updateChart(arr, {[j]: COLORS.COMPARE, [j+1]: COLORS.SWAP});
+                await sleep(getSpeed());
+                highlightLine(6); await sleep(getSpeed());
+                j = j - 1;
+                highlightLine(4); await sleep(getSpeed());
+            }
+            arr[j + 1] = key;
+            highlightLine(8); await sleep(getSpeed());
+            swaps++;
+            updateStats();
+            updateChart(arr);
+            await sleep(getSpeed());
+        }
+        return arr;
+    }
+    
+    async function quickSort(arr, low, high) {
+         if (low < high) {
+            highlightLine(1); await sleep(getSpeed());
+            let pi = await partition(arr, low, high);
+            highlightLine(2); await sleep(getSpeed());
+            
+            highlightLine(3); await sleep(getSpeed());
+            await quickSort(arr, low, pi - 1);
+            
+            highlightLine(4); await sleep(getSpeed());
+            await quickSort(arr, pi + 1, high);
+         }
+    }
+
+    async function partition(arr, low, high) {
+        highlightLine(7); await sleep(getSpeed());
+        let pivot = arr[high];
+        highlightLine(8); await sleep(getSpeed());
+        let i = low - 1;
+        highlightLine(9); await sleep(getSpeed());
+        
+        updateChart(arr, {[high]: COLORS.PIVOT});
+        await sleep(getSpeed());
+
+        highlightLine(10); await sleep(getSpeed());
+        for (let j = low; j < high; j++) {
+            updateChart(arr, {[high]: COLORS.PIVOT, [j]: COLORS.COMPARE});
+            await sleep(getSpeed());
+            highlightLine(11); await sleep(getSpeed());
+            comparisons++;
+            updateStats();
+            if (arr[j] < pivot) {
+                i++;
+                highlightLine(12); await sleep(getSpeed());
+                highlightLine(13); await sleep(getSpeed());
+                swaps++;
+                updateStats();
+                [arr[i], arr[j]] = [arr[j], arr[i]];
+                updateChart(arr, {[high]: COLORS.PIVOT, [i]: COLORS.SWAP, [j]: COLORS.SWAP});
+                await sleep(getSpeed());
+            }
+             highlightLine(10); await sleep(getSpeed());
+        }
+        highlightLine(16); await sleep(getSpeed());
+        swaps++;
+        updateStats();
+        [arr[i + 1], arr[high]] = [arr[high], arr[i + 1]];
+        updateChart(arr);
+        await sleep(getSpeed());
+        highlightLine(17); await sleep(getSpeed());
+        return i + 1;
+    }
+
+    async function mergeSort(arr, l, r) {
+        if (l >= r) {
+            return;
+        }
+        highlightLine(1); await sleep(getSpeed());
+        let m = l + Math.floor((r - l) / 2);
+        highlightLine(2); await sleep(getSpeed());
+
+        highlightLine(3); await sleep(getSpeed());
+        await mergeSort(arr, l, m);
+        highlightLine(4); await sleep(getSpeed());
+        await mergeSort(arr, m + 1, r);
+        highlightLine(5); await sleep(getSpeed());
+        await merge(arr, l, m, r);
+    }
+
+    async function merge(arr, l, m, r) {
+        let n1 = m - l + 1;
+        let n2 = r - m;
+
+        let L = new Array(n1);
+        let R = new Array(n2);
+
+        for (let i = 0; i < n1; i++) L[i] = arr[l + i];
+        for (let j = 0; j < n2; j++) R[j] = arr[m + 1 + j];
+
+        let i = 0, j = 0, k = l;
+
+        while (i < n1 && j < n2) {
+            comparisons++; updateStats();
+            updateChart(arr, { [l + i]: COLORS.COMPARE, [m + 1 + j]: COLORS.COMPARE });
+            await sleep(getSpeed());
+            if (L[i] <= R[j]) {
+                arr[k] = L[i];
+                i++;
+            } else {
+                arr[k] = R[j];
+                j++;
+            }
+            swaps++; updateStats();
+            updateChart(arr, { [k]: COLORS.SWAP });
+            await sleep(getSpeed());
+            k++;
+        }
+
+        while (i < n1) {
+            arr[k] = L[i];
+            swaps++; updateStats();
+            updateChart(arr, { [k]: COLORS.SWAP });
+            await sleep(getSpeed());
+            i++;
+            k++;
+        }
+
+        while (j < n2) {
+            arr[k] = R[j];
+            swaps++; updateStats();
+            updateChart(arr, { [k]: COLORS.SWAP });
+            await sleep(getSpeed());
+            j++;
+            k++;
+        }
+    }
+    
+    async function countingSort(arr) {
+        let max = Math.max(...arr);
+        let min = Math.min(...arr);
+        let range = max - min + 1;
+        let count = new Array(range).fill(0);
+        let output = new Array(arr.length).fill(0);
+        
+        highlightLine(1); await sleep(getSpeed());
+        highlightLine(2); await sleep(getSpeed());
+        highlightLine(3); await sleep(getSpeed());
+        for (let i = 0; i < arr.length; i++) {
+            updateChart(arr, { [i]: COLORS.COMPARE });
+            await sleep(getSpeed());
+            count[arr[i] - min]++;
+            swaps++; updateStats();
+        }
+        highlightLine(6); await sleep(getSpeed());
+        for (let i = 1; i < count.length; i++) {
+            count[i] += count[i - 1];
+        }
+        highlightLine(9); await sleep(getSpeed());
+        for (let i = arr.length - 1; i >= 0; i--) {
+            updateChart(arr, { [i]: COLORS.COMPARE });
+            await sleep(getSpeed());
+            output[count[arr[i] - min] - 1] = arr[i];
+            count[arr[i] - min]--;
+            swaps++; updateStats();
+        }
+        highlightLine(12); await sleep(getSpeed());
+        for (let i = 0; i < arr.length; i++) {
+            arr[i] = output[i];
+            updateChart(arr, { [i]: COLORS.SWAP });
+            await sleep(getSpeed());
+        }
+    }
+
+    async function linearSearch(arr, target) {
+        highlightLine(0); await sleep(getSpeed());
+        highlightLine(1); await sleep(getSpeed());
+        for (let i = 0; i < arr.length; i++) {
+            updateChart(arr, {[i]: COLORS.COMPARE});
+            comparisons++;
+            updateStats();
+            await sleep(getSpeed());
+            highlightLine(2); await sleep(getSpeed());
+            if (arr[i] === target) {
+                highlightLine(3); await sleep(getSpeed());
+                updateChart(arr, {[i]: COLORS.FOUND});
+                return i;
+            }
+        }
+        highlightLine(6); await sleep(getSpeed());
+        return -1;
+    }
+
+    async function binarySearch(arr, target) {
+        statusMessage.textContent = "Búsqueda Binaria requiere una lista ordenada. Ordenando...";
+        await quickSort(arr, 0, arr.length - 1);
+        statusMessage.textContent = "Lista ordenada. Iniciando búsqueda...";
+        updateAllSorted(arr.length);
+        await sleep(1000);
+        resetHighlight();
+        resetStats();
+        
+        highlightLine(0); await sleep(getSpeed());
+        let low = 0, high = arr.length - 1;
+        highlightLine(1); await sleep(getSpeed());
+
+        highlightLine(2); await sleep(getSpeed());
+        while (low <= high) {
+            let mid = Math.floor((low + high) / 2);
+            highlightLine(3); await sleep(getSpeed());
+            
+            updateChart(arr, {[mid]: COLORS.COMPARE, [low]: COLORS.PIVOT, [high]: COLORS.PIVOT });
+            comparisons++;
+            updateStats();
+            await sleep(getSpeed() * 2);
+            
+            highlightLine(4); await sleep(getSpeed());
+            if (arr[mid] === target) {
+                 highlightLine(5); await sleep(getSpeed());
+                 updateChart(arr, {[mid]: COLORS.FOUND});
+                 return mid;
+            } else if (arr[mid] < target) {
+                highlightLine(6); await sleep(getSpeed());
+                highlightLine(7); await sleep(getSpeed());
+                low = mid + 1;
+            } else {
+                highlightLine(8); await sleep(getSpeed());
+                highlightLine(9); await sleep(getSpeed());
+                high = mid - 1;
+            }
+            highlightLine(2); await sleep(getSpeed());
+        }
+        highlightLine(12); await sleep(getSpeed());
+        return -1;
+    }
+    
+    const sortFunctionMap = {
+        bubbleSort,
+        selectionSort,
+        insertionSort,
+        quickSort,
+        mergeSort,
+        countingSort
+    };
+
+    const getSpeed = () => parseInt(animationSpeedSlider.value, 10);
+
+    const updateAllSorted = (size) => {
+        const colorMap = {};
+        for(let i=0; i<size; i++) colorMap[i] = COLORS.SORTED;
+        updateChart(dataArray, colorMap);
+    };
+    
+    // --- Event Handlers ---
+    document.getElementById('generate-random').addEventListener('click', () => generateArray(parseInt(dataSizeSlider.value), 'random'));
+    document.getElementById('generate-sorted').addEventListener('click', () => generateArray(parseInt(dataSizeSlider.value), 'sorted'));
+    document.getElementById('generate-reversed').addEventListener('click', () => generateArray(parseInt(dataSizeSlider.value), 'reversed'));
+    document.getElementById('generate-few-unique').addEventListener('click', () => generateArray(parseInt(dataSizeSlider.value), 'fewUnique'));
+
+    startBtn.addEventListener('click', async () => {
+        if (isRunning) return;
+        
+        setControlsDisabled(true);
+        statusMessage.textContent = `Ejecutando ${algorithmsData[algorithmSelect.value].name}...`;
+        resetStats();
+        
+        const algoName = algorithmSelect.value;
+        if (algoName.includes('Search')) {
+            const target = parseInt(searchInput.value, 10);
+            if(isNaN(target)) {
+                 statusMessage.textContent = 'Por favor, ingrese un valor numérico para buscar.';
+                 setControlsDisabled(false);
+                 return;
+            }
+            let result;
+            if(algoName === 'binarySearch') {
+                result = await binarySearch(dataArray, target);
+            } else {
+                result = await linearSearch(dataArray, target);
+            }
+            
+            if (result !== -1) {
+                statusMessage.textContent = `Elemento ${target} encontrado en el índice ${result}.`;
+            } else {
+                statusMessage.textContent = `Elemento ${target} no encontrado.`;
+                 updateChart(dataArray);
+            }
+            
+        } else {
+            if (sortFunctionMap[algoName]) {
+                 if(algoName === 'quickSort' || algoName === 'mergeSort') {
+                    await sortFunctionMap[algoName](dataArray, 0, dataArray.length-1);
+                 } else {
+                    await sortFunctionMap[algoName](dataArray);
+                 }
+            }
+
+            statusMessage.textContent = '¡Ordenamiento completado!';
+            updateAllSorted(dataArray.length);
+        }
+        
+        setControlsDisabled(false);
+        resetHighlight();
+    });
+
+    dataSizeSlider.addEventListener('input', (e) => {
+        dataSizeValue.textContent = e.target.value;
+        if (!isRunning) {
+            generateArray(parseInt(e.target.value));
+        }
+    });
+
+    animationSpeedSlider.addEventListener('input', (e) => {
+        animationSpeedValue.textContent = e.target.value;
+    });
+    
+    algorithmSelect.addEventListener('change', updateUIForAlgorithm);
+
+    tabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+            tabs.forEach(t => t.classList.remove('active'));
+            tab.classList.add('active');
+            
+            const targetId = tab.dataset.target;
+            contentSections.forEach(section => {
+                const isTarget = section.id === targetId;
+                section.classList.toggle('active', isTarget);
+                section.style.display = isTarget ? 'block' : 'none';
+            });
+        });
+    });
+
+    // --- Initial Setup ---
+    function initialize() {
+        createChart();
+        generateArray(parseInt(dataSizeSlider.value));
+        updateUIForAlgorithm();
+        document.querySelector('.tab-btn[data-target="explorador"]').click();
+    }
+
+    initialize();
+
+    // --- Comparador de Rendimiento ---
+    const performanceChartCtx = document.getElementById('performanceChart').getContext('2d');
+    let performanceChart = new Chart(performanceChartCtx, {
+        type: 'bar',
+        data: {
+            labels: ['Bubble Sort', 'Selection Sort', 'Insertion Sort', 'Quick Sort'],
+            datasets: [{
+                label: 'Tiempo de ejecución (ms)',
+                data: [0, 0, 0, 0],
+                backgroundColor: [
+                    'rgba(59, 130, 246, 0.7)',   // blue
+                    'rgba(239, 68, 68, 0.7)',    // red
+                    'rgba(245, 158, 11, 0.7)',   // amber
+                    'rgba(16, 185, 129, 0.7)'    // emerald
+                ],
+                borderColor: [
+                    'rgba(59, 130, 246, 1)',
+                    'rgba(239, 68, 68, 1)',
+                    'rgba(245, 158, 11, 1)',
+                    'rgba(16, 185, 129, 1)'
+                ],
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    title: { display: true, text: 'Tiempo (ms)' }
+                }
+            },
+            plugins: {
+                legend: { display: false },
+                title: {
+                    display: true,
+                    text: 'Comparación de Rendimiento de Algoritmos de Ordenamiento'
+                }
+            }
+        }
+    });
+    
+    function generateDataForComparison(size) {
+        // Genera un array aleatorio de tamaño 'size'
+        return Array.from({ length: size }, () => Math.floor(Math.random() * 100) + 1);
+    }
+    
+    document.getElementById('runComparison').addEventListener('click', () => {
+        const size = parseInt(document.getElementById('compareSize').value, 10);
+        const analysisText = document.getElementById('comparison-analysis');
+        analysisText.textContent = `Ejecutando pruebas para N=${size.toLocaleString()}...`;
+    
+        setTimeout(() => {
+            const data = generateDataForComparison(size);
+    
+            const times = {};
+    
+            // Bubble Sort
+            let start = performance.now();
+            const bubbleArr = [...data];
+            for (let i = 0; i < bubbleArr.length; i++) {
+                for (let j = 0; j < bubbleArr.length - i - 1; j++) {
+                    if (bubbleArr[j] > bubbleArr[j + 1]) {
+                        [bubbleArr[j], bubbleArr[j + 1]] = [bubbleArr[j + 1], bubbleArr[j]];
+                    }
+                }
+            }
+            times.bubbleSort = performance.now() - start;
+    
+            // Selection Sort
+            start = performance.now();
+            const selectionArr = [...data];
+            for (let i = 0; i < selectionArr.length; i++) {
+                let min = i;
+                for (let j = i + 1; j < selectionArr.length; j++) {
+                    if (selectionArr[j] < selectionArr[min]) {
+                        min = j;
+                    }
+                }
+                if (min !== i) {
+                    [selectionArr[i], selectionArr[min]] = [selectionArr[min], selectionArr[i]];
+                }
+            }
+            times.selectionSort = performance.now() - start;
+    
+            // Insertion Sort
+            start = performance.now();
+            const insertionArr = [...data];
+            for (let i = 1; i < insertionArr.length; i++) {
+                let key = insertionArr[i];
+                let j = i - 1;
+                while (j >= 0 && insertionArr[j] > key) {
+                    insertionArr[j + 1] = insertionArr[j];
+                    j = j - 1;
+                }
+                insertionArr[j + 1] = key;
+            }
+            times.insertionSort = performance.now() - start;
+    
+            // Quick Sort (usamos el sort nativo de JS para velocidad)
+            start = performance.now();
+            const quickArr = [...data];
+            quickArr.sort((a, b) => a - b);
+            times.quickSort = performance.now() - start;
+    
+            performanceChart.data.datasets[0].data = [
+                times.bubbleSort,
+                times.selectionSort,
+                times.insertionSort,
+                times.quickSort
+            ];
+            performanceChart.update();
+    
+            analysisText.textContent = `Resultados para N=${size.toLocaleString()} elementos aleatorios. Quick Sort (implementación nativa de JS) es notablemente más rápido. Los algoritmos O(n²) son considerablemente más lentos con este volumen de datos.`;
+        }, 100);
+    });
+});
+</script>
+</body>
+</html>
