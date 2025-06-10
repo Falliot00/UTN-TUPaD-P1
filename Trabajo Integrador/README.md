@@ -2,14 +2,18 @@
 Este proyecto fue desarrollado para la materia Programación I de la Tecnicatura Universitaria en Programación (UTN). Consiste en una aplicación web interactiva de una sola página (SPA) diseñada como una herramienta educativa para visualizar y comprender el funcionamiento de los algoritmos de ordenamiento y búsqueda más comunes.
 
 **Integrantes:**
+
 Fermin Alliot, 
+
 Gabriel Antuña
 
 **Comisión:**
+
 Comisión 1
 
 **Link del video explicativo:**
-Aqui podra ver el [VIDEO](https://youtu.be/IobTp8QF_xo/ "Title").
+
+Para ver el video, haga clic [aquí](https://youtu.be/IobTp8QF_xo/ "Title").
 
 ## 📄 Presentación del Tema Elegido
 El tema seleccionado para este trabajo integrador es Algoritmos de Ordenamiento y Búsqueda. Se eligió este tema por su importancia fundamental en la ciencia de la computación y el desarrollo de software. Comprender cómo funcionan estos algoritmos y, sobre todo, saber cuándo aplicar cada uno, es una habilidad esencial para cualquier programador que busque crear soluciones eficientes y escalables.
