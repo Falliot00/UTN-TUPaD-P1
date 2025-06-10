@@ -2,17 +2,13 @@
 Este proyecto fue desarrollado para la materia Programación I de la Tecnicatura Universitaria en Programación (UTN). Consiste en una aplicación web interactiva de una sola página (SPA) diseñada como una herramienta educativa para visualizar y comprender el funcionamiento de los algoritmos de ordenamiento y búsqueda más comunes.
 
 **Integrantes:**
-
-Fermin Alliot, 
-
+Fermin Alliot y 
 Gabriel Antuña
 
 **Comisión:**
-
 Comisión 1
 
 **Link del video explicativo:**
-
 Para ver el video, haga clic [aquí](https://youtu.be/IobTp8QF_xo/ "Title").
 
 ## 📄 Presentación del Tema Elegido
