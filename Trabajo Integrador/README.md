@@ -9,7 +9,7 @@ Gabriel Antuña
 Comisión 1
 
 **Link del video explicativo:**
-
+Aqui podra ver el [VIDEO](https://youtu.be/IobTp8QF_xo/ "Title").
 
 ## 📄 Presentación del Tema Elegido
 El tema seleccionado para este trabajo integrador es Algoritmos de Ordenamiento y Búsqueda. Se eligió este tema por su importancia fundamental en la ciencia de la computación y el desarrollo de software. Comprender cómo funcionan estos algoritmos y, sobre todo, saber cuándo aplicar cada uno, es una habilidad esencial para cualquier programador que busque crear soluciones eficientes y escalables.
